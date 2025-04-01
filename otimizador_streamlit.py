@@ -4,9 +4,19 @@ import numpy as np
 from scipy.optimize import linprog
 
 st.set_page_config(page_title="Otimização Linear", layout="centered")
-st.title("🔧 Resolução de Programação Linear")
+st.title("🔧 Resolução de Programação Linear (com explicação)")
 
 tipo = st.selectbox("Escolha o tipo de problema", ["Maximização", "Minimização", "Transporte"])
+
+def exibir_debug(c, A_ub, b_ub, A_eq, b_eq):
+    st.markdown("### 🧪 Debug: Estruturas Internas")
+    st.write("**Coeficientes da função objetivo:**", c)
+    if A_ub:
+        st.write("**Restrições (≤ / ≥) convertidas:**", A_ub)
+        st.write("**Limites (b_ub):**", b_ub)
+    if A_eq:
+        st.write("**Restrições (=):**", A_eq)
+        st.write("**Limites (b_eq):**", b_eq)
 
 if tipo in ["Maximização", "Minimização"]:
     st.subheader("1️⃣ Dados da Função Objetivo")
@@ -55,6 +65,8 @@ if tipo in ["Maximização", "Minimização"]:
                       A_eq=A_eq or None, b_eq=b_eq or None,
                       bounds=[(0, None)] * num_vars, method='highs')
 
+        exibir_debug(c, A_ub, b_ub, A_eq, b_eq)
+
         if res.success:
             st.success("✅ Solução encontrada!")
             for i, val in enumerate(res.x):
@@ -62,6 +74,7 @@ if tipo in ["Maximização", "Minimização"]:
             st.write(f"Função objetivo = {(-1 if tipo == 'Maximização' else 1) * res.fun:.2f}")
         else:
             st.error("❌ Não foi possível encontrar uma solução viável.")
+            st.markdown("🧾 *Verifique se as restrições não estão se contradizendo.*")
 
 elif tipo == "Transporte":
     st.subheader("🔄 Problema de Transporte")
@@ -89,7 +102,6 @@ elif tipo == "Transporte":
         A_eq = []
         b_eq = []
 
-        # Restrições de oferta
         for i in range(origem):
             linha = [0] * (origem * destino)
             for j in range(destino):
@@ -97,7 +109,6 @@ elif tipo == "Transporte":
             A_eq.append(linha)
             b_eq.append(oferta[i])
 
-        # Restrições de demanda
         for j in range(destino):
             linha = [0] * (origem * destino)
             for i in range(origem):
